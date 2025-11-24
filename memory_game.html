@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Memory Challenge</title>
+<style>
+    body {
+        font-family: Poppins, sans-serif;
+        background: radial-gradient(circle at center, #0a0a0a, #000);
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        width: 650px;
+        text-align: center;
+        padding: 20px;
+        border-radius: 15px;
+        animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1);}
+    }
+
+    h1 {
+        color: #00eaff;
+        text-shadow: 0 0 20px #00eaff;
+        margin-bottom: 10px;
+    }
+
+    #level {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+
+    #motivation {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #c0ffc8;
+        min-height: 25px;
+    }
+
+    /* NEON BUTTON GRID */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 170px);
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .btn {
+        height: 170px;
+        border-radius: 22px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 50px;
+        cursor: pointer;
+        user-select: none;
+        border: 3px solid transparent;
+        transition: 0.25s;
+        box-shadow: 0 0 20px #000;
+    }
+
+    .btn:hover {
+        transform: scale(1.07);
+        box-shadow: 0 0 25px white;
+    }
+
+    /* Neon Glow Colors */
+    #blue { background: #0026ff; box-shadow: 0 0 20px #144fff; }
+    #red { background: #ff0026; box-shadow: 0 0 20px #ff1448; }
+    #green { background: #00ff44; box-shadow: 0 0 20px #00ff66; }
+    #yellow { background: #ffd400; color:black; box-shadow:0 0 20px #ffe14f; }
+    #purple { background: #a200ff; box-shadow: 0 0 20px #c451ff; }
+    #orange { background: #ff7b00; box-shadow: 0 0 20px #ffb347; }
+
+    /* Active Animation */
+    .active {
+        animation: glow 0.35s ease;
+    }
+
+    @keyframes glow {
+        0% { transform: scale(1); box-shadow: 0 0 30px white; }
+        50% { transform: scale(1.2); box-shadow: 0 0 45px white; }
+        100% { transform: scale(1); }
+    }
+
+    .shake {
+        animation: shakeAnim 0.4s;
+    }
+
+    @keyframes shakeAnim {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-15px); }
+        50% { transform: translateX(15px); }
+        75% { transform: translateX(-15px); }
+        100% { transform: translateX(0); }
+    }
+
+    button {
+        padding: 12px 26px;
+        margin-top: 25px;
+        font-size: 19px;
+        cursor: pointer;
+        background: #00eaff;
+        border: none;
+        border-radius: 10px;
+        color: #000;
+        font-weight: bold;
+        box-shadow: 0 0 20px #00eaff;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: #25ffff;
+        box-shadow: 0 0 40px #39ffff;
+    }
+
+    #back {
+        background: #ff0099;
+        box-shadow: 0 0 25px #ff2ebc;
+        color: white;
+        margin-left: 10px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ Neon Memory Challenge</h1>
+    <div id="level">Level: 1</div>
+    <div id="motivation"></div>
+
+    <div class="grid">
+        <div class="btn" id="blue">🔵</div>
+        <div class="btn" id="red">❌</div>
+        <div class="btn" id="green">✔</div>
+
+        <div class="btn" id="yellow">⭐</div>
+        <div class="btn" id="purple">🔺</div>
+        <div class="btn" id="orange">🔲</div>
+    </div>
+
+    <button id="startBtn">Start Game</button>
+    <button id="back" onclick="location.href='index.html'">⬅ Home</button>
+</div>
+
+<script>
+    const colors = ["blue", "red", "green", "yellow", "purple", "orange"];
+    const btn = {};
+    colors.forEach(c => btn[c] = document.getElementById(c));
+
+    let sequence = [];
+    let player = [];
+    let level = 1;
+    let speed = 700;
+
+    function sound() {
+        new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg").play();
+    }
+    function errorSound() {
+        new Audio("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg").play();
+    }
+
+    function flash(color) {
+        btn[color].classList.add("active");
+        sound();
+        setTimeout(() => btn[color].classList.remove("active"), 300);
+    }
+
+    function generate() {
+        const next = colors[Math.floor(Math.random() * colors.length)];
+        sequence.push(next);
+
+        if (level % 4 === 0) {
+            // double flash challenge
+            sequence.push(next);
+        }
+    }
+
+    function playSequence() {
+        let i = 0;
+
+        const interval = setInterval(() => {
+            flash(sequence[i]);
+            i++;
+            if (i >= sequence.length) clearInterval(interval);
+        }, speed);
+
+        // Ultra-hard mode speed increase
+        if (level >= 10) speed = 450;
+        if (level >= 15) speed = 300;
+    }
+
+    function updateLevel() {
+        document.getElementById("level").innerText = "Level: " + level;
+
+        const motivation = [
+            "🔥 Great Focus!",
+            "⚡ Excellent Memory!",
+            "🔺 You're leveling up!",
+            "💡 Brilliant!",
+            "🚀 Keep Going!",
+            "🎯 You're improving!"
+        ];
+
+        document.getElementById("motivation").innerText =
+            motivation[Math.floor(Math.random() * motivation.length)];
+    }
+
+    function startGame() {
+        level = 1;
+        sequence = [];
+        player = [];
+        speed = 700;
+        updateLevel();
+        generate();
+        playSequence();
+    }
+
+    function wrongMove() {
+        document.body.classList.add("shake");
+        errorSound();
+
+        setTimeout(() => {
+            document.body.classList.remove("shake");
+            alert("❌ Wrong Sequence! Game Over.");
+            startGame();
+        }, 500);
+    }
+
+    function check(color) {
+        player.push(color);
+        const index = player.length - 1;
+
+        if (player[index] !== sequence[index]) return wrongMove();
+
+        if (player.length === sequence.length) {
+            level++;
+            updateLevel();
+            player = [];
+            generate();
+            setTimeout(playSequence, 1000);
+        }
+    }
+
+    document.getElementById("startBtn").onclick = startGame;
+
+    colors.forEach(c => {
+        btn[c].onclick = () => {
+            flash(c);
+            check(c);
+        };
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun Learning Games</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Poppins, sans-serif;
+        background: radial-gradient(circle at top, #0a0f24, #000);
+        color: #fff;
+        overflow-x: hidden;
+    }
+
+    header {
+        text-align: center;
+        padding: 40px 20px;
+        font-size: 45px;
+        font-weight: 800;
+        color: rgb(255, 0, 119);
+        text-shadow: 0 0 20px rgb(255, 0, 81), 0 0 35px rgb(218, 3, 204);
+        letter-spacing: 3px;
+        animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+        from { text-shadow: 0 0 20px rgb(245, 8, 99); }
+        to { text-shadow: 0 0 40px rgb(255, 0, 191); }
+    }
+
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 35px;
+        padding: 40px;
+    }
+
+    .card {
+        width: 270px;
+        background: rgba(20, 20, 35, 0.95);
+        border-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 0 25px #0ff4;
+        transition: 0.4s ease;
+        border: 2px solid transparent;
+    }
+
+    .card:hover {
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 0 40px #0ff;
+        border-color: #0ff;
+    }
+
+    .card img {
+        width: 100%;
+        height: 160px;
+        border-radius: 15px;
+        object-fit: cover;
+        box-shadow: 0 0 15px #000;
+    }
+
+    .card h3 {
+        margin: 15px 0 5px;
+        font-size: 30px;
+        color: rgb(233, 87, 226);
+        text-shadow: 0 0 12px rgb(255, 0, 200);
+    }
+
+    .card p {
+        font-size: 16px;
+        color: #ccc;
+        line-height: 1.5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 12px 20px;
+        background: #0ff;
+        color: #000;
+        font-weight: bold;
+        border-radius: 10px;
+        text-decoration: none;
+        box-shadow: 0 0 20px #0ff;
+        transition: 0.3s ease;
+    }
+
+    .btn:hover {
+        background: #00e6e6;
+        box-shadow: 0 0 40px #0ff;
+    }
+</style>
+</head>
+
+<body>
+
+<header>🎮 Welcome to the Ultimate Student Game Hub 🎉</header>
+
+<div class="container">
+
+    <!-- Word Scramble -->
+    <div class="card">
+        <img src="image1.jpg">
+        <h3>JUMBLE JAM</h3>
+        <p>Unscramble letters to find the word.</p>
+        <a href="scramble.html" class="btn">Play Now</a>
+    </div>
+
+    <!-- start 2 end -->
+    <div class="card">
+        <img src="image4.jpg">
+        <h3>START 2 END</h3>
+        <p>Complete the word using start and end letters</p>
+        <a href="word_building.html" class="btn">Play Now</a>
+    </div>
+
+    <!-- hint hunt -->
+    <div class="card">
+        <img src="image3.jpg">
+        <h3>HINT HUNT</h3>
+        <p>Find the treasure using hints</p>
+        <a href="#" class="btn">Play Now</a>
+    </div>
+
+    <!-- Memory Match -->
+    <div class="card">
+        <img src="image2.jpg">
+        <h3>MEMORY MATCH</h3>
+        <p>Flip cards and match the pairs</p>
+        <a href="#" class="btn">Play Now</a>
+    </div>
+
+</div>
+
+</body>
+</html>
