@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treasure Hunt Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            padding: 15px;
+            color: #333;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Navigation */
+        #navigation {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #ff00ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 15px #ff00ff;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #ff4444;
+            box-shadow: 0 0 20px #ff4444;
+            transform: scale(1.05);
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            border-radius: 12px;
+            padding: 15px;
+            flex: 1;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e0e0e0;
+        }
+
+        .info-label {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1a2a6c;
+        }
+
+        /* Main content layout */
+        .main-content {
+            display: flex;
+            gap: 25px;
+            margin: 20px 0;
+            align-items: flex-start;
+        }
+
+        /* Left panel - Instructions */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Center panel - Grid */
+        .center-panel {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+            padding: 10px;
+            background: rgba(26, 42, 108, 0.1);
+            border-radius: 12px;
+        }
+
+        .grid-cell {
+            width: 80px;
+            height: 80px;
+            background: #e8f4fd;
+            border: 2px solid #1a2a6c;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .grid-cell:hover {
+            background: #d4e9fa;
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .grid-cell.guessed.hot {
+            background: #ffcdd2;
+            border-color: #d32f2f;
+            color: #d32f2f;
+        }
+
+        .grid-cell.guessed.warm {
+            background: #ffe0b2;
+            border-color: #ef6c00;
+            color: #ef6c00;
+        }
+
+        .grid-cell.guessed.cold {
+            background: #b3e5fc;
+            border-color: #0288d1;
+            color: #0288d1;
+        }
+
+        .grid-cell.treasure {
+            background: #ffeb3b;
+            border-color: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        .grid-cell.treasure::after {
+            content: "💰";
+            font-size: 2rem;
+        }
+
+        /* Right panel - Result */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result {
+            min-height: 180px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        #resetBtn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        #resetBtn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
+        }
+
+        .instructions {
+            background: #fff9e6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            border-left: 5px solid #fdbb2d;
+        }
+
+        .instructions h3 {
+            color: #b21f1f;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .instructions h3 i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+
+        .instructions p {
+            margin-bottom: 10px;
+            color: #555;
+            line-height: 1.4;
+            font-size: 1rem;
+        }
+
+        .clue-rating {
+            display: flex;
+            flex-direction: column;
+            margin-top: 12px;
+            gap: 8px;
+        }
+
+        .clue-item {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .hot {
+            background: #ffe6e6;
+            color: #d32f2f;
+            border: 2px solid #ffcdd2;
+        }
+
+        .warm {
+            background: #fff0e6;
+            color: #ef6c00;
+            border: 2px solid #ffe0b2;
+        }
+
+        .cold {
+            background: #e6f7ff;
+            color: #0288d1;
+            border: 2px solid #b3e5fc;
+        }
+
+        /* Celebration Popup Styles */
+        .celebration-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .celebration-popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .celebration-content {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.7);
+            transition: transform 0.5s ease;
+            max-width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .celebration-popup.active .celebration-content {
+            transform: scale(1);
+        }
+
+        .celebration-content h2 {
+            font-size: 3.5rem;
+            color: #b21f1f;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .celebration-content p {
+            font-size: 1.8rem;
+            color: #1a2a6c;
+            margin-bottom: 35px;
+            font-weight: bold;
+        }
+
+        .celebration-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .close-popup {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .close-popup:hover {
+            background: #ff5252;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Paper Animation */
+        .paper {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: white;
+            opacity: 0.8;
+            border-radius: 2px;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            animation: throwPaper 3s ease-out forwards;
+        }
+
+        @keyframes throwPaper {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+            
+            .grid-container {
+                margin: 0 auto;
+            }
+            
+            .grid-cell {
+                width: 65px;
+                height: 65px;
+                font-size: 1rem;
+            }
+            
+            .celebration-content h2 {
+                font-size: 2.5rem;
+            }
+            
+            .celebration-content p {
+                font-size: 1.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .grid-cell {
+                width: 55px;
+                height: 55px;
+                font-size: 0.9rem;
+            }
+            
+            .celebration-content {
+                padding: 30px;
+            }
+            
+            .celebration-content h2 {
+                font-size: 2rem;
+            }
+            
+            .celebration-content p {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .grid-cell {
+                width: 50px;
+                height: 50px;
+                font-size: 0.8rem;
+            }
+            
+            .game-info {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div id="navigation">
+        <!-- Replace "your-home-page.html" with your actual home page URL -->
+        <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+    </div>
+    
+    <div class="game-container">
+        <h1>Treasure Hunt</h1>
+        <p class="subtitle">Find the hidden treasure in the 5x5 grid!</p>
+        
+        <div class="game-info">
+            <div class="info-box">
+                <div class="info-label">Attempts</div>
+                <div class="info-value" id="attempts">0</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Best Score</div>
+                <div class="info-value" id="bestScore">-</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Left Panel - Instructions -->
+            <div class="left-panel">
+                <div class="instructions">
+                    <h3><i>🎯</i> How to Play</h3>
+                    <p>Click on any grid cell to search for the treasure.</p>
+                    <p>After each guess, you'll get a clue:</p>
+                    
+                    <div class="clue-rating">
+                        <div class="clue-item hot">HOT 🔥 (Very close)</div>
+                        <div class="clue-item warm">WARM 🔶 (Close)</div>
+                        <div class="clue-item cold">COLD ❄ (Far away)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Panel - Grid -->
+            <div class="center-panel">
+                <div class="grid-container" id="grid">
+                    <!-- Grid will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Right Panel - Result -->
+            <div class="right-panel">
+                <div class="result" id="result">
+                    Click on a grid cell to start searching!
+                </div>
+                <div class="buttons">
+                    <button id="resetBtn">New Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Popup -->
+    <div class="celebration-popup" id="celebrationPopup">
+        <div class="celebration-content">
+            <h2>Good Job!</h2>
+            <p>You found the Treasure!</p>
+            <div class="celebration-buttons">
+                <button class="close-popup" id="closePopup">Play Again</button>
+                <!-- Replace "your-home-page.html" with your actual home page URL -->
+                <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let treasureRow, treasureCol;
+        let attempts = 0;
+        let bestScore = localStorage.getItem('treasureBestScore') || null;
+        let guessedCells = new Set();
+        let audioContext;
+        let isAudioEnabled = false;
+        let timer;
+
+        // Initialize game
+        function initGame() {
+            // Generate random treasure location
+            treasureRow = Math.floor(Math.random() * 5) + 1;
+            treasureCol = Math.floor(Math.random() * 5) + 1;
+            
+            attempts = 0;
+            document.getElementById('attempts').textContent = attempts;
+            document.getElementById('bestScore').textContent = bestScore ? bestScore : '-';
+            
+            // Clear previous results
+            document.getElementById('result').innerHTML = "Click on a grid cell to start searching!";
+            document.getElementById('result').style.backgroundColor = "transparent";
+            document.getElementById('result').style.color = "#666";
+            
+            // Hide celebration popup
+            document.getElementById('celebrationPopup').classList.remove('active');
+            
+            // Clear guessed cells
+            guessedCells.clear();
+            
+            // Create grid
+            createGrid();
+            
+            console.log(`Treasure at: (${treasureRow}, ${treasureCol})`); // For debugging
+        }
+
+        // Create the 5x5 grid
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let row = 1; row <= 5; row++) {
+                for (let col = 1; col <= 5; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.textContent = `${row},${col}`;
+                    
+                    // Add click event to grid cells
+                    cell.addEventListener('click', () => {
+                        // Enable audio on first user interaction
+                        if (!isAudioEnabled) {
+                            enableAudio();
+                        }
+                        handleCellClick(row, col, cell);
+                    });
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // Enable audio after user interaction
+        function enableAudio() {
+            isAudioEnabled = true;
+            // Try to initialize Web Audio API
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+            } catch (e) {
+                console.log("Web Audio API is not supported in this browser");
+            }
+        }
+
+        // Calculate distance between guess and treasure
+        function calculateDistance(guessRow, guessCol) {
+            return Math.sqrt(
+                Math.pow(guessRow - treasureRow, 2) + 
+                Math.pow(guessCol - treasureCol, 2)
+            );
+        }
+
+        // Create paper throwing animation
+        function createPaperAnimation() {
+            const popup = document.getElementById('celebrationPopup');
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa5a5', '#96ceb4', '#feca57', '#ff9ff3'];
+            
+            // Create 50 paper pieces
+            for (let i = 0; i < 50; i++) {
+                const paper = document.createElement('div');
+                paper.className = 'paper';
+                
+                // Random properties for each paper
+                const left = Math.random() * 100;
+                const delay = Math.random() * 2;
+                const duration = 2 + Math.random() * 2;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                paper.style.left = `${left}%`;
+                paper.style.animationDelay = `${delay}s`;
+                paper.style.animationDuration = `${duration}s`;
+                paper.style.backgroundColor = color;
+                
+                popup.appendChild(paper);
+                
+                // Remove paper after animation completes
+                setTimeout(() => {
+                    if (paper.parentNode) {
+                        paper.parentNode.removeChild(paper);
+                    }
+                }, (delay + duration) * 1000);
+            }
+        }
+
+        // Play success sound using Web Audio API
+        function playSuccessSound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create oscillator for the main tone
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Set up the sound
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                
+                // Create a sequence of notes for a victory fanfare
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                oscillator.frequency.setValueAtTime(1046.50, audioContext.currentTime + 0.3); // C6
+                oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.4); // E6
+                
+                // Fade out
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                
+                // Start and stop the oscillator
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.8);
+                
+            } catch (error) {
+                console.log("Error playing sound:", error);
+            }
+        }
+
+        // Show celebration popup
+        function showCelebration() {
+            const popup = document.getElementById('celebrationPopup');
+            popup.classList.add('active');
+            createPaperAnimation();
+            playSuccessSound();
+        }
+
+        // Handle cell click
+        function handleCellClick(row, col, cell) {
+            const result = document.getElementById('result');
+            
+            // Check if already guessed
+            const cellKey = `${row},${col}`;
+            if (guessedCells.has(cellKey)) {
+                result.innerHTML = "You've already checked this location!";
+                result.style.color = "orange";
+                result.style.backgroundColor = "#fff9e6";
+                return;
+            }
+            
+            // Add to guessed cells
+            guessedCells.add(cellKey);
+            
+            // Increment attempts
+            attempts++;
+            document.getElementById('attempts').textContent = attempts;
+            
+            // Check if found treasure
+            if (row === treasureRow && col === treasureCol) {
+                // Found the treasure!
+                cell.classList.add('treasure');
+                cell.textContent = '';
+                
+                result.innerHTML = "🎉 You found the treasure! 🎉";
+                result.style.color = "green";
+                result.style.backgroundColor = "#e6ffe6";
+                
+                // Update best score if applicable
+                if (!bestScore || attempts < bestScore) {
+                    bestScore = attempts;
+                    localStorage.setItem('treasureBestScore', bestScore);
+                    document.getElementById('bestScore').textContent = bestScore;
+                }
+                
+                // Show celebration popup after a short delay
+                setTimeout(showCelebration, 800);
+            } else {
+                // Calculate distance and provide clue
+                const distance = calculateDistance(row, col);
+                let clue, color, bgColor, clueClass;
+                
+                if (distance <= 1) {
+                    clue = "HOT! 🔥 You're very close!";
+                    color = "#d32f2f";
+                    bgColor = "#ffe6e6";
+                    clueClass = "hot";
+                } else if (distance <= 2) {
+                    clue = "WARM! 🔶 You're getting closer!";
+                    color = "#ef6c00";
+                    bgColor = "#fff0e6";
+                    clueClass = "warm";
+                } else {
+                    clue = "COLD! ❄ You're far from the treasure.";
+                    color = "#0288d1";
+                    bgColor = "#e6f7ff";
+                    clueClass = "cold";
+                }
+                
+                // Mark cell with appropriate clue class
+                cell.classList.add('guessed', clueClass);
+                
+                result.innerHTML = clue;
+                result.style.color = color;
+                result.style.backgroundColor = bgColor;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (!isAudioEnabled) {
+                enableAudio();
+            }
+            initGame();
+        });
+        
+        document.getElementById('closePopup').addEventListener('click', () => {
+            document.getElementById('celebrationPopup').classList.remove('active');
+            initGame();
+        });
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>

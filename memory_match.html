@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MEMORY MATCH</title>
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: #000;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Navigation */
+#navigation {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+/* Buttons */
+button {
+    padding: 12px 24px;
+    font-size: 18px;
+    background: #00eaff;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #00eaff;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+button:hover {
+    background: #00ff73;
+    box-shadow: 0 0 20px #00ff73;
+    transform: scale(1.05);
+}
+
+.back-btn {
+    background: #ff00ff;
+    box-shadow: 0 0 15px #ff00ff;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #ff4444;
+    box-shadow: 0 0 20px #ff4444;
+}
+
+h1 {
+    color: #00eaff;
+    text-shadow: 0 0 15px #00eaff, 0 0 30px #00eaff;
+    font-size: 40px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Timer */
+#timer {
+    font-size: 26px;
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: #ff00ff;
+    text-shadow: 0 0 12px #ff00ff;
+    margin: 10px 0;
+}
+
+/* Time-Up message */
+#timeup {
+    font-size: 45px;
+    margin-top: 20px;
+    display: none;
+    color: #ff0000;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+}
+
+#timeup-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Game Board */
+#game-board {
+    width: 520px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+/* Cards */
+.card {
+    width: 100%;
+    height: 120px;
+    perspective: 900px;
+    cursor: pointer;
+}
+
+.inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: 0.6s;
+}
+
+.flipped .inner {
+    transform: rotateY(180deg);
+}
+
+.front, .back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.3em;
+}
+
+.front {
+    background: #0c0c0c;
+    color: #00ff73;
+    transform: rotateY(180deg);
+    text-shadow: 0 0 12px #00ff73, 0 0 25px #00ff73;
+    box-shadow: 0 0 12px #00ff73;
+}
+
+.back {
+    background: #111;
+    border: 2px solid #00eaff;
+    color: #00eaff;
+    text-shadow: 0 0 12px #00eaff;
+    box-shadow: 0 0 15px #00eaff;
+}
+
+/* WIN popup */
+#popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 999;
+}
+
+#popup-overlay h2 {
+    font-size: 60px;
+    color: #00ff73;
+    text-shadow: 0 0 20px #00ff73, 0 0 40px #00ff73;
+    margin-bottom: 20px;
+}
+
+/* Confetti */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    from { transform: translateY(-10px) rotate(0deg); }
+    to { transform: translateY(100vh) rotate(360deg); }
+}
+
+/* Sound Toggle Button */
+#soundToggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #00ff73;
+    color: black;
+}
+
+#soundToggle.muted {
+    background: #ff6b6b;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    #game-board {
+        width: 90%;
+        max-width: 400px;
+    }
+    
+    .card {
+        height: 100px;
+    }
+    
+    h1 {
+        font-size: 32px;
+    }
+    
+    #timer {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 400px) {
+    #game-board {
+        width: 95%;
+        gap: 10px;
+    }
+    
+    .card {
+        height: 80px;
+    }
+    
+    .front, .back {
+        font-size: 1.8em;
+    }
+    
+    h1 {
+        font-size: 28px;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<div id="navigation">
+    <!-- Replace 'your-home-page.html' with your actual home page URL -->
+    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+</div>
+
+<!-- Sound Toggle -->
+<button id="soundToggle" onclick="toggleSound()">🔊 Sound On</button>
+
+<h1>🤩 MEMORY MATCH 🤩</h1>
+<div id="timer">⏳ Time Left: 45s</div>
+<div id="timeup-container">
+    <div id="timeup">⛔ TIME UP!</div>
+    <button onclick="setupGame()">🔄 New Game</button>
+    <!-- Replace 'your-home-page.html' with your actual home page URL -->
+    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+</div>
+<div id="game-board"></div>
+
+<div id="popup-overlay"></div>
+
+<script>
+const board = document.getElementById("game-board");
+const overlay = document.getElementById("popup-overlay");
+const timerDisplay = document.getElementById("timer");
+const timeupDisplay = document.getElementById("timeup");
+const timeupContainer = document.getElementById("timeup-container");
+const soundToggle = document.getElementById("soundToggle");
+
+let icons = ["🍎","⭐","🐶","🍌","🎈","🚗"];
+let values = [...icons, ...icons];
+let flipped = [];
+let lock = false;
+let timeLeft = 45; // Changed from 30 to 45 seconds
+let timer;
+let soundEnabled = true;
+let audioContext;
+
+// Initialize audio context
+function initAudio() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContext();
+    } catch (e) {
+        console.log("Web Audio API not supported");
+        soundEnabled = false;
+        soundToggle.textContent = "🔇 No Sound";
+        soundToggle.classList.add("muted");
+    }
+}
+
+// Toggle sound on/off
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+        soundToggle.textContent = "🔊 Sound On";
+        soundToggle.classList.remove("muted");
+        // Resume audio context if it was suspended
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    } else {
+        soundToggle.textContent = "🔇 Sound Off";
+        soundToggle.classList.add("muted");
+    }
+}
+
+// Play win sound
+function playWinSound() {
+    if (!soundEnabled || !audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Victory fanfare melody
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        
+        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+        oscillator.frequency.setValueAtTime(1046.50, audioContext.currentTime + 0.3); // C6
+        oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.4); // E6
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.8);
+    } catch (error) {
+        console.log("Error playing win sound:", error);
+    }
+}
+
+// Play lose sound
+function playLoseSound() {
+    if (!soundEnabled || !audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Sad descending tone
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        
+        oscillator.frequency.setValueAtTime(349.23, audioContext.currentTime + 0.2); // F4
+        oscillator.frequency.setValueAtTime(293.66, audioContext.currentTime + 0.4); // D4
+        oscillator.frequency.setValueAtTime(261.63, audioContext.currentTime + 0.6); // C4
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.0);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 1.0);
+    } catch (error) {
+        console.log("Error playing lose sound:", error);
+    }
+}
+
+// Play card flip sound
+function playFlipSound() {
+    if (!soundEnabled || !audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (error) {
+        console.log("Error playing flip sound:", error);
+    }
+}
+
+// Play match sound
+function playMatchSound() {
+    if (!soundEnabled || !audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+        console.log("Error playing match sound:", error);
+    }
+}
+
+// Play mismatch sound
+function playMismatchSound() {
+    if (!soundEnabled || !audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(220.00, audioContext.currentTime); // A3 (low tone)
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+        console.log("Error playing mismatch sound:", error);
+    }
+}
+
+// Shuffle array
+function shuffle(arr) {
+    for (let i = arr.length-1; i>0; i--){
+        let j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function setupGame() {
+    board.innerHTML = "";
+    overlay.style.display = "none";
+    timeupContainer.style.display = "none";
+    flipped = [];
+    lock = false;
+
+    shuffle(values);
+
+    clearInterval(timer);
+    timeLeft = 45; // Changed from 30 to 45 seconds
+    timerDisplay.innerText = `⏳ Time Left: ${timeLeft}s`;
+
+    timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = `⏳ Time Left: ${timeLeft}s`;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            lock = true; // stop game play
+            timeupContainer.style.display = "flex"; // SHOW TIME UP with buttons
+            playLoseSound(); // Play lose sound when time's up
+        }
+    }, 1000);
+
+    values.forEach(val=>{
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="inner">
+                <div class="front">${val}</div>
+                <div class="back">?</div>
+            </div>
+        `;
+        card.dataset.value = val;
+        card.addEventListener("click", ()=>flip(card));
+        board.appendChild(card);
+    });
+}
+
+function flip(card){
+    if(lock || card.classList.contains("flipped")) return;
+    
+    playFlipSound(); // Play flip sound
+    card.classList.add("flipped");
+    flipped.push(card);
+    
+    if(flipped.length===2){
+        lock=true;
+        setTimeout(checkMatch,600);
+    }
+}
+
+function checkMatch(){
+    const [c1,c2] = flipped;
+    if(c1.dataset.value !== c2.dataset.value){
+        c1.classList.remove("flipped");
+        c2.classList.remove("flipped");
+        playMismatchSound(); // Play mismatch sound
+    } else {
+        playMatchSound(); // Play match sound
+    }
+    flipped=[];
+    lock=false;
+    checkWin();
+}
+
+function checkWin(){
+    const total = document.querySelectorAll(".card").length;
+    const matched = document.querySelectorAll(".flipped").length;
+    if(matched === total){
+        clearInterval(timer);
+        showPopup();
+    }
+}
+
+function showPopup(){
+    overlay.innerHTML = `
+        <h2>🎉 YOU WIN! 🎉</h2>
+        <button onclick="setupGame()">🔄 New Game</button>
+        <!-- Replace 'your-home-page.html' with your actual home page URL -->
+        <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+    `;
+    overlay.style.display = "flex";
+
+    playWinSound(); // Play win sound
+    
+    for(let i=0;i<60;i++){
+        const conf = document.createElement("div");
+        conf.className = "confetti";
+        conf.style.backgroundColor = `hsl(${Math.random()*360},100%,50%)`;
+        conf.style.left = Math.random()*window.innerWidth+"px";
+        conf.style.animationDuration = (2+Math.random()*3)+"s";
+        overlay.appendChild(conf);
+    }
+}
+
+// Initialize audio and start the game
+initAudio();
+setupGame();
+</script>
+</body>
+</html>

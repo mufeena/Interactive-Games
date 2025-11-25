@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Word Scramble — Neon Arcade</title>
+    
+    <!-- confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root{
+            --bg:#000000;
+            --panel:#09090b;
+            --neon1:#00ffea; /* cyan */
+            --neon2:#ff2df7; /* magenta */
+            --neon3:#ffd300; /* gold */
+            --glass: rgba(255,255,255,0.03);
+        }
+
+        /* Page */
+        html,body{
+            height:100%; 
+            margin:0; 
+            background: radial-gradient(circle at 10% 10%, #080818 0%, #000 40%, #020006 100%);
+            font-family: "Orbitron", "Poppins", system-ui, sans-serif;
+            color: #e6f7ff;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Big retro frame - Increased size */
+        .stage{
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 28px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border: 2px solid rgba(255,255,255,0.03);
+            box-shadow: 0 0 40px rgba(0,0,0,0.6), inset 0 0 50px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        /* neon arcade header */
+        header{
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .title{
+            font-size: 32px;
+            letter-spacing: 2px;
+            color: var(--neon1);
+            text-shadow: 0 0 6px rgba(0,255,234,0.4), 0 0 20px rgba(0,255,234,0.12), 0 6px 30px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .title .dot{
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%;
+            background: linear-gradient(90deg,var(--neon2),var(--neon1));
+            box-shadow: 0 0 12px var(--neon2), 0 0 32px var(--neon1);
+            transform: translateY(-2px);
+        }
+
+        /* back button neon */
+        .nav-controls{display: flex; gap: 10px; align-items: center;}
+        .back-btn{
+            background: transparent;
+            border: 2px solid rgba(255,255,255,0.06);
+            color: var(--neon2);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 0 20px rgba(255,45,247,0.06);
+            transition: transform .12s ease, box-shadow .12s;
+        }
+        .back-btn:hover{ 
+            transform: scale(1.04); 
+            box-shadow: 0 0 40px rgba(255,45,247,0.18); 
+        }
+
+        /* game grid - Adjusted for larger size */
+        .game-wrap{
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* left panel (game) - Increased size */
+        .panel{
+            width: 100%;
+            min-height: 480px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.03);
+            position: relative;
+        }
+
+        /* scoreboard row */
+        .stats{
+            display: flex; 
+            gap: 14px; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .stat{
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.03);
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+        }
+        .stat .label{
+            font-size: 12px; 
+            color: #a9dfe8;
+        }
+        .stat .value{
+            font-size: 20px; 
+            font-weight: 800; 
+            margin-top: 6px;
+        }
+
+        /* neon scrambled display - Increased size */
+        .scramble-wrap{
+            margin-top: 20px;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            gap: 20px;
+        }
+        .scrambled{
+            font-size: 56px;
+            letter-spacing: 16px;
+            padding: 24px 32px;
+            border-radius: 12px;
+            color: var(--neon1);
+            background: linear-gradient(90deg, rgba(0,255,234,0.03), rgba(255,45,247,0.02));
+            box-shadow: 0 8px 38px rgba(0,0,0,0.6), 0 0 42px rgba(0,255,234,0.06), 0 0 12px rgba(255,45,247,0.02);
+            border: 1px solid rgba(255,255,255,0.03);
+            transform-origin: center;
+            animation: neonFlicker 3s infinite;
+        }
+
+        @keyframes neonFlicker{
+            0% { 
+                filter: drop-shadow(0 0 10px rgba(0,255,234,0.08)); 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            50%{ 
+                filter: drop-shadow(0 0 26px rgba(255,45,247,0.06)); 
+                opacity: .98; 
+                transform: scale(1.02); 
+            }
+            100%{ 
+                filter: drop-shadow(0 0 10px rgba(0,255,234,0.08)); 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+
+        /* input row - Increased size */
+        .input-row{ 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            margin-top: 12px; 
+            align-items: center; 
+            width: 100%;
+        }
+        .guess-input{
+            width: 70%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            outline: none;
+            border: 2px solid rgba(0,0,0,0.4);
+            background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(255,255,255,0.02));
+            color: #eaffff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7), 0 0 18px rgba(0,255,234,0.04);
+        }
+        .guess-input:focus{ 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7), 0 0 36px rgba(0,255,234,0.28); 
+            border-color: rgba(0,255,234,0.5); 
+        }
+
+        .btn-neon{
+            padding: 16px 22px;
+            border-radius: 12px;
+            background: linear-gradient(90deg,var(--neon2),var(--neon1));
+            color: #04111a;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 1px;
+            font-size: 18px;
+            box-shadow: 0 6px 30px rgba(255,45,247,0.12), 0 0 30px rgba(0,255,234,0.08);
+            transform: translateZ(0);
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+        .btn-neon:hover{ 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 10px 50px rgba(255,45,247,0.2), 0 0 80px rgba(0,255,234,0.18); 
+        }
+
+        .hint { 
+            color: #ffdfe0; 
+            font-weight: 700; 
+            margin-top: 10px; 
+            min-height: 24px; 
+            font-size: 18px;
+        }
+
+        .feedback{
+            height: 36px;
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0,0,0,0.6);
+        }
+        .ok{ 
+            color: #7fffb4; 
+            text-shadow: 0 0 24px rgba(127,255,180,0.12); 
+        }
+        .bad{ 
+            color: #ff7b7b; 
+            text-shadow: 0 0 24px rgba(255,123,123,0.12); 
+        }
+
+        /* footer small */
+        .small{ 
+            margin-top: 12px; 
+            color: #bcdbe6; 
+            font-size: 13px; 
+            text-align: center; 
+        }
+
+        /* responsive */
+        @media (max-width: 900px){
+            .game-wrap{ 
+                flex-direction: column; 
+                align-items: center; 
+            }
+            .panel{ 
+                width: 92%; 
+            }
+        }
+        
+        /* POPUP */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .popup-content {
+            background: #111;
+            padding: 25px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px #0ff, inset 0 0 10px #0ff;
+            border-radius: 10px;
+            text-align: center;
+            animation: popIn 0.4s ease-out;
+        }
+
+        .popup-content h2 {
+            color: #0ff;
+            text-shadow: 0 0 12px #0ff;
+            margin-bottom: 10px;
+        }
+
+        .popup-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #0ff;
+            border: none;
+            color: black;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 12px #0ff;
+            transition: 0.3s;
+        }
+
+        .popup-btn:hover {
+            background: #0ab;
+            box-shadow: 0 0 20px #0ff;
+        }
+
+        @keyframes popIn {
+            from { 
+                transform: scale(0.5); 
+                opacity: 0; 
+            }
+            to { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+        }
+        
+        /* Shake animation for wrong answers */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="stage">
+    <header>
+        <div class="title"><span class="dot"></span> NEON ARCADE — Word Scramble</div>
+        <div class="nav-controls">
+            <a class="back-btn" href="index.html">⬅ Back Home</a>
+        </div>
+    </header>
+
+    <div class="game-wrap">
+        <div class="panel">
+            <div class="stats">
+                <div class="stat">
+                    <div class="label">SCORE</div>
+                    <div id="score" class="value">0 / 5</div>
+                </div>
+                <div class="stat">
+                    <div class="label">LIVES</div>
+                    <div id="lives" class="value">3 / 3</div>
+                </div>
+                <div class="stat">
+                    <div class="label">TIMER</div>
+                    <div id="timer" class="value">20s</div>
+                </div>
+            </div>
+
+            <div class="scramble-wrap">
+                <div id="scrambled" class="scrambled">LOADING</div>
+
+                <div class="input-row">
+                    <input id="guess" class="guess-input" placeholder="Type your guess and press Submit" autocomplete="off">
+                    <button class="btn-neon" id="submitBtn">SUBMIT</button>
+                    <button class="btn-neon" id="hintBtn" style="background: linear-gradient(90deg,var(--neon3),var(--neon1));">HINT</button>
+                </div>
+
+                <div id="hint" class="hint"></div>
+                <div id="feedback" class="feedback"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- confetti canvas (script uses library) -->
+<canvas id="confettiCanvas" style="position:fixed;left:0;top:0;pointer-events:none;width:100%;height:100%;"></canvas>
+
+<!-- PLAY AGAIN POPUP -->
+<div id="winPopup" class="popup">
+    <div class="popup-content">
+        <h2 id="popupMessage">YOU WON!</h2>
+        <button id="playAgainBtn" class="popup-btn">PLAY AGAIN</button>
+    </div>
+</div>
+
+<script>
+    /* =========================
+       Word Scramble — Neon Arcade
+       ========================= */
+
+    const words = [
+        {word:"banana", hint:"A yellow fruit"},
+        {word:"planet", hint:"Earth is one"},
+        {word:"teacher", hint:"A person who teaches"},
+        {word:"school", hint:"A place to learn"},
+        {word:"pencil", hint:"Used for writing"},
+        {word:"science", hint:"Study of the natural world"},
+        {word:"computer", hint:"Machine for computing"},
+        {word:"station", hint:"A stopping point"},
+        {word:"camera", hint:"Used to take photos"},
+        {word:"laptop", hint:"Portable computer"},
+        {word:"chocolate", hint:"Sweet and yummy"},
+        {word:"rainbow", hint:"7 colors in the sky"},
+        {word:"kitchen", hint:"Place where you cook"},
+        {word:"battery", hint:"Gives power to devices"},
+        {word:"butterfly", hint:"Colorful flying insect"},
+        {word:"mountain", hint:"Very tall landform"},
+        {word:"diamond", hint:"Very precious stone"},
+        {word:"sunrise", hint:"Morning sky becomes bright"},
+        {word:"holiday", hint:"No school day"},
+        {word:"library", hint:"A place full of books"},
+        {word:"student", hint:"One who studies"},
+        {word:"airport", hint:"Where planes land"},
+        {word:"festival", hint:"A celebration day"},
+        {word:"puzzle", hint:"Something you solve"},
+        {word:"galaxy", hint:"Group of stars"},
+        {word:"system", hint:"A set of connected things"},
+        {word:"journey", hint:"A long trip"},
+        {word:"future", hint:"What is yet to come"},
+        {word:"forest", hint:"A place full of trees"},
+        {word:"island", hint:"Land surrounded by water"},
+        {word:"danger", hint:"Risk or harm"},
+        {word:"moment", hint:"Very short time"},
+        {word:"pocket", hint:"Inside your clothes"},
+        {word:"talent", hint:"Natural skill"},
+        {word:"silver", hint:"A shiny metal"},
+        {word:"bridge", hint:"Helps you cross rivers"},
+        {word:"engine", hint:"Runs a vehicle"},
+        {word:"secret", hint:"Not to be told"},
+        {word:"market", hint:"Buy groceries here"},
+        {word:"nature", hint:"Plants, animals, forests"},
+        {word:"garden", hint:"Plants grow here"},
+        {word:"helmet", hint:"Protects your head"},
+        {word:"apple", hint:"A red or green fruit"},
+        {word:"tiger", hint:"A big striped animal"},
+        {word:"river", hint:"Water that flows"},
+        {word:"chair", hint:"You sit on it"},
+        {word:"happy", hint:"Feeling good"},
+        {word:"water", hint:"You drink it"},
+        {word:"bread", hint:"You eat it with jam"},
+        {word:"plant", hint:"Green and grows"},
+        {word:"phone", hint:"Used to call"},
+        {word:"train", hint:"Runs on tracks"},
+        {word:"light", hint:"Opposite of dark"},
+        {word:"table", hint:"You keep things on it"},
+        {word:"smile", hint:"Expression of happiness"},
+        {word:"candy", hint:"Kids love to eat"},
+        {word:"cloud", hint:"Floats in the sky"},
+        {word:"adult", hint:"Opposite of child"},
+        {word:"piano", hint:"A musical instrument"},
+        {word:"castle", hint:"A big royal building"},
+        {word:"doctor", hint:"Helps sick people"},
+        {word:"animal", hint:"Living creature"},
+        {word:"window", hint:"You look outside through it"},
+        {word:"orange", hint:"A fruit and a color"},
+        {word:"rocket", hint:"Goes to space"},
+        {word:"design", hint:"Plan or create something"},
+        {word:"travel", hint:"Go from one place to another"},
+        {word:"butter", hint:"Used on bread"},
+        {word:"energy", hint:"Needed to work"},
+        {word:"bottle", hint:"Holds liquids"},
+        {word:"friend", hint:"Someone you like"},
+        {word:"family", hint:"Parents and siblings"},
+    ];
+
+    let currentWord = "";
+    let score = 0, wrong = 0;
+    let timeLeft = 20, timer = null;
+    let gameOverFlag = false;
+
+    /* elements */
+    const scrambledEl = document.getElementById('scrambled');
+    const guessEl = document.getElementById('guess');
+    const submitBtn = document.getElementById('submitBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const hintEl = document.getElementById('hint');
+    const feedbackEl = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const timerEl = document.getElementById('timer');
+    const winPopup = document.getElementById('winPopup');
+    const popupMessage = document.getElementById('popupMessage');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+
+    /* audio using WebAudio API for crisp neon sounds */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq=880, type='sine', dur=0.08, vol=0.07){
+        try{
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = type; 
+            o.frequency.value = freq;
+            g.gain.value = vol;
+            o.connect(g); 
+            g.connect(audioCtx.destination);
+            o.start();
+            setTimeout(()=>{ o.stop(); }, dur*1000);
+        }catch(e){ /* ignore audio errors */ }
+    }
+    
+    function playSuccess(){ 
+        playTone(1200,'sine',0.08,0.08); 
+        playTone(750,'triangle',0.12,0.035); 
+    }
+    
+    function playFail(){ 
+        playTone(220,'square',0.18,0.08); 
+    }
+    
+    // Happy sound for winning
+    function playWinSound() {
+        // Play a cheerful melody
+        playTone(523.25, 'sine', 0.2, 0.1); // C5
+        setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 200); // E5
+        setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 400); // G5
+        setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.1), 600); // C6
+    }
+
+    /* confetti helper */
+    function confettiBurst(){
+        confetti({
+            particleCount: 220,
+            spread: 100,
+            origin: { y: 0.6 }
+        });
+    }
+
+    /* scramble utility: ensure scrambled != original (unless single permutation) */
+    function scrambleWord(w){
+        if(w.length < 2) return w;
+        let arr = w.split('');
+        let attempts=0;
+        do {
+            for (let i = arr.length-1; i>0; i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            attempts++;
+            if(attempts>12) break;
+        } while(arr.join('') === w);
+        return arr.join('');
+    }
+
+    function showPopup(message) {
+        popupMessage.textContent = message;
+        winPopup.style.display = "flex";
+    }
+
+    function restartGame() {
+        winPopup.style.display = "none";
+        score = 0;
+        wrong = 0;
+        gameOverFlag = false;
+        updateUI();
+        nextRound();
+    }
+
+    /* start/resume game */
+    function startGame(){
+        gameOverFlag = false;
+        score = 0; 
+        wrong = 0;
+        updateUI();
+        nextRound();
+    }
+
+    /* next round */
+    function nextRound(){
+        if(gameOverFlag) return;
+        if(score >= 5){ 
+            winGame(); 
+            return; 
+        }
+        if(wrong >= 3){ 
+            loseGame(); 
+            return; 
+        }
+
+        const item = words[Math.floor(Math.random()*words.length)];
+        currentWord = item.word;
+        scrambledEl.textContent = scrambleWord(currentWord).toUpperCase();
+        hintEl.textContent = "";
+        feedbackEl.textContent = "";
+        guessEl.value = "";
+        guessEl.disabled = false;
+        submitBtn.disabled = false;
+        hintBtn.disabled = false;
+        resetTimer();
+        guessEl.focus();
+    }
+
+    /* update scoreboard UI */
+    function updateUI(){
+        scoreEl.textContent = `${score} / 5`;
+        livesEl.textContent = `${3 - wrong} / 3`;
+        timerEl.textContent = `${timeLeft}s`;
+    }
+
+    /* timer */
+    function resetTimer(){
+        clearInterval(timer);
+        timeLeft = 20;
+        updateUI();
+        timer = setInterval(()=>{
+            timeLeft--;
+            updateUI();
+            if(timeLeft <= 0){
+                clearInterval(timer);
+                onTimeUp();
+            }
+        },1000);
+    }
+
+    /* on time up */
+    function onTimeUp(){
+        wrong++;
+        updateUI();
+        showFeedback("⏰ Time's up! Word: " + currentWord.toUpperCase(), 'bad');
+        playFail();
+        // short pause before next round
+        setTimeout(nextRound,1200);
+    }
+
+    /* check answer */
+    function checkAnswer(){
+        if(gameOverFlag) return;
+        const guess = (guessEl.value || "").trim().toLowerCase();
+        if(!guess){
+            showFeedback("Type your guess!", 'bad');
+            animateFail();
+            return;
+        }
+        // exact match only
+        if(guess === currentWord.toLowerCase()){
+            score++;
+            updateUI();
+            showFeedback("🎉 Correct!", 'ok');
+            playSuccess();
+            confettiBurst();
+            clearInterval(timer);
+            setTimeout(nextRound,1000);
+        } else {
+            wrong++;
+            updateUI();
+            showFeedback("❌ Wrong! Try next.", 'bad');
+            playFail();
+            // small shake animation
+            animateFail();
+            clearInterval(timer);
+            setTimeout(nextRound,900);
+        }
+    }
+
+    /* show hint */
+    function showHint(){
+        const item = words.find(w => w.word === currentWord);
+        hintEl.textContent = item ? ("Hint: " + item.hint) : "";
+    }
+
+    /* feedback show */
+    function showFeedback(msg, kind){
+        feedbackEl.textContent = msg;
+        feedbackEl.className = 'feedback ' + (kind === 'ok' ? 'ok' : 'bad');
+    }
+
+    /* win / lose */
+    function winGame(){
+        gameOverFlag = true;
+        clearInterval(timer);
+        confettiBurst();
+        playWinSound(); // Play happy win sound
+        showFeedback("🎆 YOU WON! Great job!", 'ok');
+        disableControls();
+
+        showPopup("🎉 YOU WON! 🎉");
+    }
+
+    function loseGame(){
+        gameOverFlag = true;
+        clearInterval(timer);
+        showFeedback("💥 Better luck next time!", 'bad');
+        disableControls();
+
+        showPopup("❌ YOU LOST! TRY AGAIN ❌");
+    }
+
+    /* disable controls */
+    function disableControls(){
+        guessEl.disabled = true;
+        submitBtn.disabled = true;
+        hintBtn.disabled = true;
+    }
+
+    /* animations */
+    function animateFail(){
+        guessEl.classList.add('shake');
+        setTimeout(()=> guessEl.classList.remove('shake'), 420);
+    }
+
+    /* wire events */
+    submitBtn.addEventListener('click', checkAnswer);
+    hintBtn.addEventListener('click', showHint);
+    guessEl.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter') checkAnswer();
+    });
+
+    // Single event listener for play again button
+    playAgainBtn.addEventListener('click', restartGame);
+
+    /* start */
+    startGame();
+
+    /* ensure confetti canvas covers full window */
+    window.addEventListener('resize', ()=> {
+        // confetti library handles internal canvas; no action needed
+    });
+</script>
+</body>
+</html>

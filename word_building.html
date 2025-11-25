@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Word Building Game — Enhanced Version</title>
+<style>
+    body { background:#000; font-family:Poppins, sans-serif; color:#fff; text-align:center; overflow-x:hidden; }
+    .container{margin-top:50px;}
+    .title{font-size:40px; color:#0ff; text-shadow:0 0 15px #0ff;}
+    .letters-box{display:flex; justify-content:center; margin:20px 0;}
+    .letter{font-size:55px; margin:0 30px; padding:25px; border-radius:15px; background:#111; box-shadow:0 0 25px #0ff; color:#0ff; font-weight:bold;}
+    .timer{margin:20px; font-size:26px;}
+    #wordInput{width:60%; padding:12px; font-size:22px; border-radius:10px; border:none; outline:none; box-shadow:0 0 18px #0f0;}
+    .btn{margin-top:20px; padding:12px 20px; font-size:22px; background:#0ff; color:#000; border:none; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow:0 0 30px #0ff;}
+    .btn:hover{box-shadow:0 0 45px #0ff;}
+    .score{margin-top:20px; font-size:30px;}
+    .message{margin-top:14px; font-size:18px; min-height:24px;}
+    .ok{color:#8ef58e; font-weight:700;}
+    .bad{color:#ff7b7b; font-weight:700;}
+    .success-animation{animation:pop .4s ease-out; box-shadow:0 0 30px #0f0 !important;}
+    @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.18);}100%{transform:scale(1);}}
+    .shake{animation:shakeAnim .4s;}
+    @keyframes shakeAnim{0%,100%{transform:translateX(0);}25%{transform:translateX(-10px);}50%{transform:translateX(10px);}75%{transform:translateX(-10px);}}
+    .back-btn{position:absolute; top:20px; left:20px; color:#0ff; font-size:22px; text-decoration:none;}
+    #confettiCanvas{position:fixed; top:0; left:0; pointer-events:none; z-index:9999;}
+    .small { font-size:14px; color:#cbd5e1; margin-top:6px; }
+    
+    /* Possible letters section */
+    .possible-letters {
+        margin: 20px auto;
+        padding: 15px;
+        background: rgba(0, 255, 255, 0.1);
+        border-radius: 10px;
+        max-width: 80%;
+    }
+    .possible-letters h3 {
+        color: #0ff;
+        margin-bottom: 10px;
+        font-size: 22px;
+    }
+    .letters-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .possible-letter {
+        display: inline-block;
+        padding: 8px 12px;
+        background: rgba(0, 255, 255, 0.2);
+        border-radius: 6px;
+        font-weight: bold;
+        color: #0ff;
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    }
+    
+    /* Answer display */
+    .answer-display {
+        margin: 15px auto;
+        padding: 12px;
+        background: rgba(255, 215, 0, 0.15);
+        border-radius: 8px;
+        max-width: 80%;
+        display: none;
+    }
+    .answer-display.show {
+        display: block;
+        animation: fadeIn 0.5s ease-out;
+    }
+    .answer-display p {
+        margin: 0;
+        font-size: 18px;
+        color: #ffd700;
+    }
+    .answer-word {
+        font-weight: bold;
+        font-size: 22px;
+        color: #ffd700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Popup styles */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    }
+    .popup-content {
+        background: #111;
+        padding: 30px;
+        border: 2px solid #0ff;
+        box-shadow: 0 0 30px #0ff, inset 0 0 15px #0ff;
+        border-radius: 15px;
+        text-align: center;
+        animation: popIn 0.5s ease-out;
+        max-width: 500px;
+        width: 80%;
+    }
+    .popup-content h2 {
+        color: #0ff;
+        text-shadow: 0 0 15px #0ff;
+        margin-bottom: 20px;
+        font-size: 36px;
+    }
+    .popup-content p {
+        font-size: 22px;
+        margin-bottom: 25px;
+        color: #fff;
+    }
+    .popup-btn {
+        padding: 12px 25px;
+        background: #0ff;
+        border: none;
+        color: black;
+        font-size: 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        box-shadow: 0 0 15px #0ff;
+        transition: 0.3s;
+        font-weight: bold;
+    }
+    .popup-btn:hover {
+        background: #0ab;
+        box-shadow: 0 0 25px #0ff;
+        transform: scale(1.05);
+    }
+    @keyframes popIn {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-btn">⬅ Back</a>
+
+<div class="container">
+    <h1 class="title">Word Building Game</h1>
+
+    <div class="letters-box">
+        <span id="startLetter" class="letter">A</span>
+        <span id="endLetter" class="letter">E</span>
+    </div>
+
+    <div class="timer">⏳ Time Left: <span id="time">20</span>s</div>
+
+    <input type="text" id="wordInput" placeholder="Type your word..." autocomplete="off" />
+    <br>
+    <button id="submitBtn" class="btn">Submit</button>
+
+    <div class="message" id="messageArea"></div>
+    
+    <!-- Answer display section -->
+    <div class="answer-display" id="answerDisplay">
+        <p>Possible answer: <span class="answer-word" id="answerWord"></span></p>
+    </div>
+    
+    <!-- New section for possible letters -->
+    <div class="possible-letters">
+        <h3>Possible Letters to Use</h3>
+        <div class="letters-container" id="possibleLettersContainer">
+            <!-- Letters will be populated by JavaScript -->
+        </div>
+        <div class="small">These letters can help you form valid words with the given start and end letters.</div>
+    </div>
+
+    <div class="score">Score: <span id="score">0</span> / 6</div>
+    <div class="small">Lives: <span id="lives">2</span> / 2</div>
+
+    <canvas id="confettiCanvas"></canvas>
+</div>
+
+<!-- Win Popup -->
+<div id="winPopup" class="popup">
+    <div class="popup-content">
+        <h2>🎉 Congratulations! 🎉</h2>
+        <p>You've won the game with a score of 6!</p>
+        <button id="playAgainWinBtn" class="popup-btn">Play Again</button>
+    </div>
+</div>
+
+<!-- Lose Popup -->
+<div id="losePopup" class="popup">
+    <div class="popup-content">
+        <h2>❌ Game Over ❌</h2>
+        <p>You've used all your lives. Better luck next time!</p>
+        <button id="playAgainLoseBtn" class="popup-btn">Try Again</button>
+    </div>
+</div>
+
+<script>
+/* ---------- Local fallback dictionary (lowercase) ---------- */
+const LOCAL_DICTIONARY = new Set([
+  "apple","angle","animal","actor","aeroplane","awake","arrive",
+  "school","station","season","solution","section",
+  "doctor","danger","dinner","driver","dancer",
+  "future","feature","figure","failure","flower",
+  "mobile","miracle","medicine","muscle",
+  "planet","pencil","people","pocket",
+  "camera","center","culture","cinema","comma",
+  "laptop","letter","leader","launch","lookup",
+  "table","trust","taste","test",
+  "smart","silent","street","start","spirit","agree","alone",
+  "create","celebrate","capture","compute","compare",
+  "demand","deliver","design","discover","divide",
+  "energy","engage","enable","ensure","excel",
+  "gravity","genuine","gather","gesture"
+]);
+
+// Dictionary of possible answers for each letter combination
+const POSSIBLE_ANSWERS = {
+  "AE": ["apple", "angle", "awake", "alone", "agree"],
+  "SE": ["school", "station", "solution", "section"],
+  "DE": ["doctor", "danger", "dinner", "driver", "dancer"],
+  "FE": ["future", "feature", "figure", "failure", "flower"],
+  "ME": ["mobile", "miracle", "medicine", "muscle"],
+  "PE": ["planet", "pencil", "people", "pocket"],
+  "CE": ["camera", "center", "culture", "cinema", "comma"],
+  "LE": ["laptop", "letter", "leader", "launch", "lookup"],
+  "TE": ["table", "trust", "taste", "test"],
+  "GE": ["gravity", "genuine", "gather", "gesture"],
+  "BE": ["bottle", "bridge", "bicycle", "breathe"],
+  "NE": ["nature", "notice", "noodle", "nurture"],
+  "RE": ["river", "rocket", "remote", "rescue"],
+  "VE": ["value", "village", "volume", "vibrate"],
+  "KE": ["kettle", "knife", "kite", "knowledge"],
+  "HE": ["house", "happy", "honey", "humble"],
+  "WE": ["water", "wonder", "welcome", "whistle"],
+  "JE": ["jewel", "joke", "judge", "juice"],
+  "ZE": ["zebra", "zero", "zone", "zest"]
+};
+
+/* ---------- State & elements ---------- */
+let startLetter = '', endLetter = '';
+let timeLeft = 20, timerInterval = null;
+let score = 0;
+let lives = 2;
+let validating = false; // prevent double submits
+let currentPossibleAnswers = [];
+
+const startEl = document.getElementById('startLetter');
+const endEl = document.getElementById('endLetter');
+const timeEl = document.getElementById('time');
+const inputEl = document.getElementById('wordInput');
+const msgEl = document.getElementById('messageArea');
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const submitBtn = document.getElementById('submitBtn');
+const possibleLettersContainer = document.getElementById('possibleLettersContainer');
+const answerDisplay = document.getElementById('answerDisplay');
+const answerWord = document.getElementById('answerWord');
+
+const winPopup = document.getElementById('winPopup');
+const losePopup = document.getElementById('losePopup');
+const playAgainWinBtn = document.getElementById('playAgainWinBtn');
+const playAgainLoseBtn = document.getElementById('playAgainLoseBtn');
+
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext && canvas.getContext('2d');
+function resizeCanvas(){ if(ctx){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; } }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+/* ---------- Audio Context for Sounds ---------- */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq=880, type='sine', dur=0.08, vol=0.07){
+    try{
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type; 
+        o.frequency.value = freq;
+        g.gain.value = vol;
+        o.connect(g); 
+        g.connect(audioCtx.destination);
+        o.start();
+        setTimeout(()=>{ o.stop(); }, dur*1000);
+    }catch(e){ /* ignore audio errors */ }
+}
+
+function playSuccessSound(){ 
+    playTone(1200,'sine',0.08,0.08); 
+    playTone(750,'triangle',0.12,0.035); 
+}
+
+function playWinSound() {
+    // Play a cheerful melody for winning
+    playTone(523.25, 'sine', 0.2, 0.1); // C5
+    setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 200); // E5
+    setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 400); // G5
+    setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.1), 600); // C6
+}
+
+function playLoseSound() {
+    // Play a sad sound for losing
+    playTone(220, 'sine', 0.3, 0.1);
+    setTimeout(() => playTone(196, 'sine', 0.4, 0.08), 300);
+    setTimeout(() => playTone(174, 'sine', 0.5, 0.06), 700);
+}
+
+function playFail(){ 
+    playTone(220,'square',0.18,0.08); 
+}
+
+/* ---------- Utils ---------- */
+function showMessage(text, kind='') {
+  msgEl.textContent = text;
+  msgEl.className = 'message ' + (kind==='ok'? 'ok' : (kind==='bad' ? 'bad' : ''));
+}
+
+// Get all possible letter combinations that have words
+function getValidLetterCombinations() {
+    const combinations = [];
+    for (const combo in POSSIBLE_ANSWERS) {
+        if (POSSIBLE_ANSWERS[combo] && POSSIBLE_ANSWERS[combo].length > 0) {
+            combinations.push(combo);
+        }
+    }
+    return combinations;
+}
+
+// Pick a random valid letter combination
+function pickValidLetterCombination() {
+    const validCombinations = getValidLetterCombinations();
+    if (validCombinations.length === 0) {
+        // Fallback to default if no combinations found
+        return { start: 'A', end: 'E' };
+    }
+    
+    const randomCombo = validCombinations[Math.floor(Math.random() * validCombinations.length)];
+    return {
+        start: randomCombo[0],
+        end: randomCombo[1]
+    };
+}
+
+/* ---------- Generate letters & start turn ---------- */
+function generateLetters(){
+    // Get a valid letter combination
+    const letters = pickValidLetterCombination();
+    startLetter = letters.start;
+    endLetter = letters.end;
+    
+    startEl.textContent = startLetter;
+    endEl.textContent = endLetter;
+    showMessage(`Type a real English word that STARTS with ${startLetter} and ENDS with ${endLetter}.`);
+    resetTimer();
+    inputEl.value = '';
+    inputEl.focus();
+    
+    // Hide answer display
+    answerDisplay.classList.remove('show');
+    
+    // Update possible letters
+    updatePossibleLetters();
+    
+    // Get possible answers for this letter combination
+    const letterCombo = startLetter + endLetter;
+    currentPossibleAnswers = POSSIBLE_ANSWERS[letterCombo] || [];
+    
+    // If somehow we still don't have answers, generate a new combination
+    if (currentPossibleAnswers.length === 0) {
+        setTimeout(generateLetters, 100);
+        return;
+    }
+}
+
+/* ---------- Update possible letters display ---------- */
+function updatePossibleLetters() {
+    // Clear previous letters
+    possibleLettersContainer.innerHTML = '';
+    
+    // Get all possible letters that can be used (excluding start and end letters)
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const possibleLetters = [];
+    
+    for (let i = 0; i < alphabet.length; i++) {
+        const letter = alphabet[i];
+        // Skip the start and end letters as they're already displayed
+        if (letter !== startLetter && letter !== endLetter) {
+            possibleLetters.push(letter);
+        }
+    }
+    
+    // Shuffle the letters for variety
+    shuffleArray(possibleLetters);
+    
+    // Take only 8-12 letters to display (not too many)
+    const displayCount = Math.min(12, possibleLetters.length);
+    const displayLetters = possibleLetters.slice(0, displayCount);
+    
+    // Create letter elements
+    displayLetters.forEach(letter => {
+        const letterEl = document.createElement('span');
+        letterEl.className = 'possible-letter';
+        letterEl.textContent = letter;
+        possibleLettersContainer.appendChild(letterEl);
+    });
+}
+
+// Helper function to shuffle array
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+/* ---------- Timer ---------- */
+function resetTimer(){
+    clearInterval(timerInterval);
+    timeLeft = 20;
+    timeEl.textContent = timeLeft;
+    timerInterval = setInterval(()=>{
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+        if(timeLeft <= 0){ clearInterval(timerInterval); onTimeout(); }
+    }, 1000);
+}
+
+/* ---------- Submit / Validation (async) ---------- */
+async function checkWord(){
+    if(validating) return;
+    const raw = (inputEl.value || '').trim();
+    const word = raw.toLowerCase();
+
+    if(!word){
+        showMessage('Please type a word.', 'bad'); inputEl.focus(); return;
+    }
+    if(word.length < 3){
+        showMessage('Too short — use at least 3 letters.', 'bad'); animateFail(); return;
+    }
+    if(word[0].toUpperCase() !== startLetter){
+        showMessage(`Wrong start letter: your word starts with "${word[0].toUpperCase()}", expected "${startLetter}".`, 'bad'); animateFail(); return;
+    }
+    if(word[word.length-1].toUpperCase() !== endLetter){
+        showMessage(`Wrong end letter: your word ends with "${word[word.length-1].toUpperCase()}", expected "${endLetter}".`, 'bad'); animateFail(); return;
+    }
+
+    // now check dictionary via API, fallback to local set
+    validating = true;
+    submitBtn.textContent = 'Checking...';
+    submitBtn.disabled = true;
+    showMessage('Checking word in dictionary...', '');
+
+    const valid = await validateWordWithFallback(word);
+    validating = false;
+    submitBtn.textContent = 'Submit';
+    submitBtn.disabled = false;
+
+    if(!valid.ok){
+        // valid.ok === false, show reason
+        showMessage(valid.reason || 'Not a valid English word.', 'bad');
+        animateFail();
+        loseLife();
+        return;
+    }
+
+    // success
+    onSuccess(word);
+}
+
+/* ---------- Validate with Dictionary API, fallback ---------- */
+async function validateWordWithFallback(word){
+    // Try DictionaryAPI.dev first
+    const apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+    try{
+        const res = await fetch(apiUrl);
+        if(res.ok){
+            // optional: parse and ensure it's a word (res.json() includes meanings)
+            return { ok:true, source:'api' };
+        } else {
+            // Not found by API -> try local dictionary
+            if(LOCAL_DICTIONARY.has(word)) return { ok:true, source:'local' };
+            return { ok:false, reason:'Word not found in dictionary.' };
+        }
+    }catch(err){
+        // Network / CORS / API error -> fallback to local dictionary
+        if(LOCAL_DICTIONARY.has(word)) return { ok:true, source:'local' };
+        return { ok:false, reason:'Dictionary lookup failed (offline fallback used and word not found).' };
+    }
+}
+
+/* ---------- Success / Fail handlers ---------- */
+function onSuccess(word){
+    clearInterval(timerInterval);
+    showMessage(`✅ "${word}" accepted! +1 point`, 'ok');
+    playSuccessSound(); // Play success sound
+    animateSuccess();
+    
+    // Add 1 point for correct answer
+    score += 1;
+    scoreEl.textContent = score;
+    
+    // Check for win condition (changed to 6 points)
+    if (score >= 6) {
+        winGame();
+        return;
+    }
+    
+    // short delay then next
+    setTimeout(()=>{ generateLetters(); }, 900);
+}
+
+function onTimeout(){
+    clearInterval(timerInterval);
+    showMessage("⏰ Time's up!", 'bad');
+    
+    // Show the answer
+    showAnswer();
+    
+    animateFail();
+    loseLife();
+    
+    // Check if game should continue
+    if (lives > 0) {
+        setTimeout(()=>{ generateLetters(); }, 2000);
+    }
+}
+
+function showAnswer() {
+    // Pick a random possible answer
+    if (currentPossibleAnswers && currentPossibleAnswers.length > 0) {
+        const randomAnswer = currentPossibleAnswers[Math.floor(Math.random() * currentPossibleAnswers.length)];
+        answerWord.textContent = randomAnswer;
+        answerDisplay.classList.add('show');
+    }
+}
+
+function loseLife() {
+    lives--;
+    livesEl.textContent = lives;
+    
+    // Play lose sound when losing a life
+    playLoseSound();
+    
+    // Check for lose condition
+    if (lives <= 0) {
+        loseGame();
+    }
+}
+
+function winGame() {
+    clearInterval(timerInterval);
+    winPopup.style.display = 'flex';
+    playWinSound(); // Play win sound
+    startConfetti();
+    disableControls();
+}
+
+function loseGame() {
+    clearInterval(timerInterval);
+    losePopup.style.display = 'flex';
+    playLoseSound(); // Play lose sound for game over
+    disableControls();
+}
+
+function restartGame() {
+    // Reset game state
+    score = 0;
+    lives = 2;
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    
+    // Hide popups
+    winPopup.style.display = 'none';
+    losePopup.style.display = 'none';
+    
+    // Re-enable controls
+    enableControls();
+    
+    // Start new game
+    generateLetters();
+}
+
+function disableControls() {
+    inputEl.disabled = true;
+    submitBtn.disabled = true;
+}
+
+function enableControls() {
+    inputEl.disabled = false;
+    submitBtn.disabled = false;
+}
+
+/* ---------- Animations ---------- */
+function animateSuccess(){
+    const box = document.querySelector('.letters-box');
+    box.classList.add('success-animation');
+    startConfetti();
+    setTimeout(()=>box.classList.remove('success-animation'), 700);
+}
+
+function animateFail(){
+    inputEl.classList.add('shake');
+    setTimeout(()=>inputEl.classList.remove('shake'), 500);
+}
+
+/* ---------- Confetti (simple canvas confetti) ---------- */
+function startConfetti(){
+    if(!ctx) return;
+    const pieces = [], W = canvas.width, H = canvas.height;
+    for(let i=0;i<140;i++){
+        pieces.push({ x:Math.random()*W, y:Math.random()*H - H, w:6, h:10, hue:Math.floor(Math.random()*360), speed:Math.random()*3+2, rot:Math.random()*360 });
+    }
+    let ticks = 0;
+    const id = setInterval(()=>{
+        ctx.clearRect(0,0,W,H);
+        for(const p of pieces){
+            p.y += p.speed; p.rot += 6;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot*Math.PI/180);
+            ctx.fillStyle = `hsl(${p.hue} 90% 60%)`;
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            ctx.restore();
+            if(p.y > H+30) p.y = -30;
+        }
+        ticks++;
+        if(ticks > 90){ clearInterval(id); ctx.clearRect(0,0,W,H); }
+    }, 20);
+}
+
+/* ---------- Wire events ---------- */
+submitBtn.addEventListener('click', checkWord);
+inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter') checkWord(); });
+playAgainWinBtn.addEventListener('click', restartGame);
+playAgainLoseBtn.addEventListener('click', restartGame);
+
+/* ---------- Start ---------- */
+window.addEventListener('load', ()=>{ generateLetters(); });
+</script>
+</body>
+</html>

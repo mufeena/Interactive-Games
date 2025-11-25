@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIND SPARK</title>
+<style>
+    body {
+        background: #0d0d0d;
+        font-family: Arial, sans-serif;
+        color: #00eaff;
+        text-align: center;
+        padding: 30px;
+        overflow-x: hidden;
+    }
+
+    /* Navigation */
+    #navigation {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+    }
+
+    .back-btn {
+        padding: 12px 24px;
+        font-size: 16px;
+        background: #ff00ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 0 15px #ff00ff;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+        background: #ff4444;
+        box-shadow: 0 0 20px #ff4444;
+        transform: scale(1.05);
+    }
+
+    h1 {
+        color: #00ffc8;
+        text-shadow: 0 0 10px #00ffc8;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    .game-box {
+        margin-top: 40px;
+        padding: 30px;
+        background: #111;
+        border-radius: 15px;
+        width: 95%;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 0 25px #00eaff;
+        border: 2px solid #00eaff;
+    }
+
+    #hint1, #hint2 {
+        font-size: 2.4rem;
+        margin: 20px 0;
+        color: #00ffc8;
+        text-shadow: 0 0 5px #050505;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #answer {
+        padding: 15px;
+        width: 85%;
+        border-radius: 10px;
+        border: 2px solid #00eaff;
+        outline: none;
+        text-align: center;
+        font-size: 1.3rem;
+        margin-top: 20px;
+        transition: 0.3s;
+        background: #1a1a1a;
+        color: #00eaff;
+    }
+
+    #answer:focus {
+        box-shadow: 0 0 15px #00eaff;
+        transform: scale(1.02);
+    }
+
+    #answer.wrong {
+        background: #ff4d4d;
+        color: white;
+        border-color: #ff0000;
+        animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    button {
+        background: #00eaff;
+        border: none;
+        color: #000;
+        padding: 15px 35px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+        cursor: pointer;
+        margin-top: 25px;
+        transition: 0.3s;
+        font-weight: bold;
+        box-shadow: 0 0 10px #00eaff;
+    }
+
+    button:hover {
+        box-shadow: 0 0 20px #00eaff;
+        transform: scale(1.05);
+    }
+
+    #timer {
+        font-size: 1.5rem;
+        margin-top: 20px;
+        color: #ffea00;
+        text-shadow: 0 0 5px #ffea00;
+        font-weight: bold;
+    }
+
+    #timeup {
+        margin-top: 20px;
+        font-size: 1.3rem;
+        color: #ff4d4d;
+        height: 30px;
+        font-weight: bold;
+        text-shadow: 0 0 5px #ff4d4d;
+    }
+
+    /* FULL SCREEN GOOD JOB POPUP */
+    #popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 999;
+        overflow: hidden;
+    }
+
+    #popup h1 {
+        font-size: 4rem;
+        color: #00ff73;
+        text-shadow: 0 0 20px #00ff73, 0 0 40px #ff44ff;
+        margin-bottom: 30px;
+        z-index: 1000;
+        position: relative;
+    }
+
+    #replayBtn {
+        background: #00ff73;
+        padding: 18px 45px;
+        font-size: 1.5rem;
+        border-radius: 12px;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 1000;
+        position: relative;
+        color: #000;
+        margin-bottom: 15px;
+    }
+
+    #replayBtn:hover {
+        box-shadow: 0 0 25px #00ff73;
+        transform: scale(1.05);
+    }
+
+    /* CONFETTI / PAPER */
+    .confetti {
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        opacity: 0.9;
+        transform: rotate(45deg);
+        animation: fall linear forwards;
+        z-index: 999;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    .score-display {
+        font-size: 1.2rem;
+        color: #00ffc8;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    /* Game over popup */
+    #gameOverPopup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 999;
+    }
+
+    #gameOverPopup h1 {
+        font-size: 3.5rem;
+        color: #ff4d4d;
+        text-shadow: 0 0 20px #ff4d4d;
+        margin-bottom: 20px;
+    }
+
+    #gameOverPopup p {
+        font-size: 1.5rem;
+        color: #00eaff;
+        margin-bottom: 30px;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 2rem;
+        }
+        
+        .game-box {
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        #hint1, #hint2 {
+            font-size: 1.2rem;
+        }
+        
+        #answer {
+            font-size: 1.1rem;
+            padding: 12px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+        }
+        
+        #popup h1 {
+            font-size: 3rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        body {
+            padding: 15px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+        }
+        
+        .game-box {
+            padding: 15px;
+        }
+        
+        #hint1, #hint2 {
+            font-size: 1.1rem;
+        }
+        
+        #answer {
+            width: 90%;
+            font-size: 1rem;
+        }
+        
+        #popup h1 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<div id="navigation">
+    <!-- Replace 'your-home-page.html' with your actual home page URL -->
+    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+</div>
+
+<h1>Word Builder Game</h1>
+
+<div class="game-box">
+    <h2 id="hint1"></h2>
+    <h2 id="hint2"></h2>
+
+    <input type="text" id="answer" placeholder="Type your word..." autocomplete="off">
+    <br>
+    <button onclick="checkAnswer()">Submit</button>
+
+    <div id="timer"></div>
+    <div id="timeup"></div>
+    <div class="score-display" id="scoreDisplay">Words Completed: 0</div>
+</div>
+
+<!-- WIN POPUP -->
+<div id="popup">
+    <h1>GOOD JOB!</h1>
+    <button id="replayBtn" onclick="nextWord()">Next Word</button>
+    <button class="back-btn" onclick="goHome()">← Back to Home</button>
+</div>
+
+<!-- GAME OVER POPUP -->
+<div id="gameOverPopup">
+    <h1>TIME'S UP!</h1>
+    <p id="correctWord"></p>
+    <button id="replayBtn" onclick="nextWord()">New Game</button>
+    <button class="back-btn" onclick="goHome()" style="margin-top: 15px;">← Back to Home</button>
+</div>
+
+<script>
+const words = [
+    {word:"football", h1:"You walk with this.", h2:"A round object you kick."},
+    {word:"raincoat", h1:"Water from clouds.", h2:"Clothing worn during rain."},
+    {word:"sunflower", h1:"Bright thing in the sky.", h2:"A tall yellow flower."},
+    {word:"toothbrush", h1:"Inside your mouth.", h2:"Used to clean your teeth."},
+    {word:"notebook", h1:"Something you write in.", h2:"Has many pages."},
+    {word:"bedroom", h1:"Place where you sleep.", h2:"A room in a house."},
+    {word:"cupcake", h1:"A cup used for drinks.", h2:"A small sweet cake."},
+    {word:"airport", h1:"Place for planes.", h2:"A big travel area."},
+    {word:"basketball", h1:"A basket to carry items.", h2:"A large sports ball."},
+    {word:"snowman", h1:"Cold white snow.", h2:"A man shape made of snow."},
+    {word:"rainbow", h1:"Water falling from sky.", h2:"Colorful arc in sky."},
+    {word:"teacup", h1:"Hot drink.", h2:"Small cup."},
+    {word:"keychain", h1:"Opens locks.", h2:"Holds keys together."},
+    {word:"blackboard", h1:"Color opposite of white.", h2:"Board used in class."},
+    {word:"bookstore", h1:"A reading item.", h2:"A place to buy things."},
+    {word:"playground", h1:"Kids love doing this.", h2:"A large open area."},
+    {word:"watermelon", h1:"Something you drink.", h2:"A big juicy fruit."},
+    {word:"doorbell", h1:"Door of house.", h2:"Something that rings."},
+    {word:"firefly", h1:"Burning flames.", h2:"A glowing insect."},
+    {word:"laptop", h1:"Your lap.", h2:"Top part."}
+];
+
+let remainingWords = [...words]; // copy of words array
+let currentWord;
+let timer;
+let timeLeft = 60;
+let wordsCompleted = 0;
+
+// Navigation function
+function goHome() {
+    // Replace 'your-home-page.html' with your actual home page URL
+    window.location.href = 'index.html';
+}
+
+// Start game with random non-repeating word
+function startGame() {
+    if(remainingWords.length === 0) {
+        // reset all words if all used
+        remainingWords = [...words];
+        wordsCompleted = 0;
+    }
+
+    document.getElementById("timeup").innerHTML = "";
+    document.getElementById("answer").value = "";
+    document.getElementById("answer").classList.remove("wrong");
+    document.getElementById("gameOverPopup").style.display = "none";
+    timeLeft = 60;
+    document.getElementById("timer").innerHTML = "Time Left: 60";
+    document.getElementById("scoreDisplay").innerHTML = "Words Completed: " + wordsCompleted;
+
+    // pick a random word from remainingWords
+    const index = Math.floor(Math.random() * remainingWords.length);
+    const random = remainingWords.splice(index, 1)[0]; // remove selected word
+    currentWord = random.word;
+
+    document.getElementById("hint1").innerHTML = "Hint 1: " + random.h1;
+    document.getElementById("hint2").innerHTML = "Hint 2: " + random.h2;
+
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerHTML = "Time Left: " + timeLeft;
+        
+        // Change color when time is running out
+        if(timeLeft <= 10) {
+            document.getElementById("timer").style.color = "#ff4d4d";
+            document.getElementById("timer").style.textShadow = "0 0 10px #ff4d4d";
+        }
+        
+        if(timeLeft <= 0){
+            clearInterval(timer);
+            document.getElementById("timeup").innerHTML = "Time Up!";
+            showGameOver();
+        }
+    },1000);
+}
+
+function showGameOver() {
+    document.getElementById("correctWord").innerHTML = "The word was: " + currentWord;
+    document.getElementById("gameOverPopup").style.display = "flex";
+}
+
+function nextWord() {
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("gameOverPopup").style.display = "none";
+    startGame();
+}
+
+function createConfetti() {
+    for(let i=0;i<200;i++){
+        let conf = document.createElement("div");
+        conf.classList.add("confetti");
+        conf.style.left = Math.random()*window.innerWidth + "px";
+        conf.style.backgroundColor = randomColor();
+        conf.style.animationDuration = (Math.random()*2 + 2) + "s";
+        conf.style.width = (Math.random()*12 + 8) + "px";
+        conf.style.height = conf.style.width;
+        document.getElementById("popup").appendChild(conf);
+        setTimeout(()=>conf.remove(),3000);
+    }
+}
+
+function randomColor(){
+    const colors = ["#ff4d4d","#4dff4d","#4db8ff","#ffff4d","#ff4dff","#44ffff","#ffbb33","#33ffbb"];
+    return colors[Math.floor(Math.random()*colors.length)];
+}
+
+function checkAnswer(){
+    const ans = document.getElementById("answer").value.toLowerCase().trim();
+    if(ans === currentWord){
+        clearInterval(timer);
+        wordsCompleted++;
+        document.getElementById("popup").style.display = "flex";
+        createConfetti(); // launch colorful papers immediately
+    } else {
+        let box = document.getElementById("answer");
+        box.classList.add("wrong");
+        setTimeout(()=>box.classList.remove("wrong"),1000);
+    }
+}
+
+// Allow Enter key to submit answer
+document.getElementById("answer").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        checkAnswer();
+    }
+});
+
+// Start first word
+startGame();
+</script>
+</body>
+</html>
